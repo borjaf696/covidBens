@@ -1,0 +1,351 @@
+---
+title: "Variantes análisis: COVIDBENS"
+author: "Borja Freire Castro"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(knitr)
+library(ggplot2)
+library(kableExtra)
+# Files in path
+variants.files <- list.files("data_variantes/", full.names = T)
+#df_variants <- read.csv(variants.files[1], sep = '\t')
+#df_variants$variant <- variants.files[1]
+df_variants <- data.frame()
+for (file in variants.files)
+{
+  df_variants_tmp <- read.csv(file, sep = '\t')
+  df_variants <- rbind(df_variants, df_variants_tmp)
+}
+df_variants <- df_variants[,c('gene','ref_aa','alt_aa','codon_num','codon_end','type','prevalence','pangolin_lineage')]
+df_variants$codon_num <- as.numeric(df_variants$codon_num)
+df_variants$codon_end <- as.character(df_variants$codon_end)
+df_variants$codon_end[df_variants$codon_end == "None"] <- -1
+df_variants$codon_end <- as.numeric(as.character(df_variants$codon_end))
+subs.idx <- df_variants$type == 'substitution'
+indels.idx <- df_variants$type == 'deletion'
+df_variants$gene <- as.character(df_variants$gene)
+#df_variants$gene[df_variants$gene == 'ORF1a' | df_variants$gene == 'ORF1b'] <- 'ORF1ab'
+df_variants[subs.idx,'key'] <- paste(df_variants[subs.idx,]$gene,":",df_variants[subs.idx,]$ref_aa, df_variants[subs.idx,]$codon_num, df_variants[subs.idx,]$alt_aa, sep="")
+df_variants[indels.idx,'key'] <- paste(df_variants[indels.idx,'gene'],":DEL",df_variants[indels.idx,'codon_num'],"/",df_variants[indels.idx,'codon_end'], sep="")
+df_variants$key_del <- -1
+df_variants[indels.idx,'key_del'] <- paste(df_variants[indels.idx,'gene'],":",df_variants[indels.idx,]$codon_num, sep = "")
+df_variants_deletion <- df_variants[df_variants$type=='deletion',]
+# Frequency threshold
+relevance_freq <- 0.0
+# 0.5 de las variantes
+lineage_freq <- 0.8
+l_lineages <- length(unique(df_variants$pangolin_lineage))
+variantes_comunes <- data.frame()
+for (key in unique(df_variants$key))
+{
+  df_tmp <- na.omit(df_variants[df_variants$key == key,])
+  percentage <- length(unique(df_tmp$pangolin_lineage)) / l_lineages
+  if (percentage >= lineage_freq){
+    variantes_comunes <- rbind(variantes_comunes, df_variants[(df_variants$key == key),])
+    df_variants <- na.omit(df_variants[!(df_variants$key == key),])
+  }
+}
+```
+
+## Estudio por sample:
+
+A continuación se muestra un estudio muestra por muestra donde se obtienen las mutaciones de interés para las **variants of concern** de *outbreak.info*. 
+
+Eliminamos de las variantes aquellas mutaciones registradas que aparezcan en más del 50% de las variantes de interés.
+
+### Caso iVar
+
+Filtro definido con AllGenetics
+
+  * Test exacto de Fisher - PASS
+
+```{r, echo = F, fig.align='center',results = 'asis'}
+samples.files <- list.files("resultados_ivar/", pattern = 'output.variants_alt.tsv', recursive = T, full.names = T)
+# date_samples <- c(as.Date('2021-03-10'),as.Date('2021-02-22'),as.Date('2021-02-01'),as.Date('2020-11-27'),as.Date('2021-01-15'),as.Date('2020-12-16'),as.Date('2021-01-27'),as.Date('2021-03-15'))
+date_samples <- c("Semana 19.1", "Semana 19.2")
+num_sample <- 1
+data_complete_all_samples <- data.frame()
+colours <- c("#000000",rainbow(100)) # c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7","#999999","#CC6666", "#9999CC", "#66CC99","#66CC88","#66CC77")
+cols_per_variant <- c()
+variants_legend <- c()
+for (sample in samples.files)
+{
+  new_mutations <- data.frame()
+  cat('Sample: ',sample," ", date_samples[num_sample]," \n")
+  df_sample <- read.csv(sample, sep = ',')
+  df_sample <- df_sample[df_sample$Gen != 'Unknown',]
+  df_sample$Frequency <- as.numeric(as.character(df_sample$ALT_FREQ))
+  df_sample$Frequency <- df_sample$ALT_DP/(df_sample$ALT_DP + df_sample$REF_DP)
+  df_sample$Gen <- paste(df_sample$Gen,':', sep = "")
+  df_sample$key <- paste(df_sample$REF,df_sample$POS, df_sample$ALT, sep="")
+  df_sample$key_aa_orf1b <- paste(df_sample$Gen,df_sample$REF_AA, df_sample$POS_AA.2, df_sample$ALT_AA, sep="")
+  df_sample$key_aa <- paste(df_sample$REF_AA, df_sample$POS_AA, df_sample$ALT_AA, sep="")
+  df_sample <- df_sample %>% group_by(key) %>% summarise_all(first)
+  df_sample$key_partial <- paste(df_sample$REF_AA,df_sample$POS_AA.2, sep="")
+  df_sample$POS_CP <- paste(df_sample$Gen,df_sample$POS_AA.2, sep="")
+  # Rename
+  df_sample <- df_sample %>% rename(Pos_AA=POS_AA.2)
+  # Filtro
+  df_sample <- df_sample[df_sample$PASS == 'True',]
+  # Histogram
+  #hist(df_sample[df_sample$Frequency >= 0.1, 'Frequency']$Frequency, breaks = seq(0.01,1,by = 0.01),freq = T, xlab = 'Frequencia Mutación', main = paste('Sample: ',sample))
+  col <- 2
+  data_complete <- data.frame()
+  sorted_variants <- c()
+  sorted_cols <- c()
+  for (variant in unique(df_variants$pangolin_lineage))
+  {
+    sorted_variants <- c(sorted_variants, variant)
+    sorted_cols <- c(sorted_cols, colours[col])
+    df_variant_tmp <- df_variants[df_variants$pangolin_lineage == variant,]
+    df_variant_tmp$variant <- variant
+    if (dim(new_mutations)[1] == 0)
+    {
+      new_mutations <- df_sample[(!df_sample$key_aa_orf1b %in% df_variants$key)  & (!df_sample$POS_CP %in% df_variants$key_del) & (df_sample$Frequency > 0.1),]
+    } else {
+      new_mutations <- rbind(new_mutations, df_sample[(!df_sample$key_aa_orf1b %in% df_variants$key)  & (!df_sample$POS_CP %in% df_variants$key_del) & (df_sample$Frequency > 0.1) & (!df_sample$key_aa_orf1b %in% new_mutations$key_aa_orf1b),])
+    }
+    # Substitutions
+    data_filtered <- merge(df_variant_tmp[df_variant_tmp$type!='deletion',],df_sample, by.x = 'key', by.y = 'key_aa_orf1b', all.x = TRUE)
+    data_filtered <- data_filtered[order(data_filtered$Frequency,decreasing = T ),c('key','Gen','REF_AA','Pos_AA','ALT_AA','Frequency','ALT_DP','REF_DP','variant','key.y')]
+    data_filtered$col <- colours[col]
+    cat(kable(booktabs = T,data_filtered[order(data_filtered$Gen,data_filtered$Pos_AA),c('key','key.y','Gen','REF_AA','Pos_AA','ALT_AA','ALT_DP','REF_DP','Frequency')],row.names = F, align = 'l', caption = paste('Sustituciones encontradas: ',variant)))
+    data_filtered <- na.omit(data_filtered)
+    if (dim(data_complete)[1] == 0){
+      #data_complete <- data_filtered[((data_filtered$Frequency > relevance_freq) | (data_filtered$Relevance == 1)) & !data_filtered$key %in% data_complete$key,]
+      data_complete <- data_filtered[!data_filtered$key %in% data_complete$key,]
+    } else {
+      data_complete[data_complete$key %in% data_filtered$key,'col'] <- colours[1]
+      data_complete <- rbind(data_complete,data_filtered[!data_filtered$key %in% data_complete$key,])
+    }
+    # Indels
+    df_variant_tmp <- df_variants[df_variants$pangolin_lineage == variant & df_variants$type == 'deletion',]
+    if (dim(df_variant_tmp)[1] > 0){
+      df_variant_tmp$variant <- variant
+      for (i in df_variant_tmp$key_del)
+      {
+        df_tmp <- df_variant_tmp[df_variant_tmp$key_del == i,]
+        df_sample$POS_CP[df_sample$Pos_AA >= df_tmp$codon_num & df_sample$Pos_AA <= df_tmp$codon_end & df_sample$Gen == df_tmp$gene] <- df_tmp$key_del
+      }
+      data_filtered <- merge(df_variant_tmp,df_sample, by.x = 'key_del', by.y = 'POS_CP', all.x = TRUE)
+      data_filtered <- data_filtered[order(data_filtered$Frequency,decreasing = T ),c('key.x','Gen','REF_AA','Pos_AA','ALT_AA','Frequency','ALT_DP','REF_DP','variant','key.y')]
+      data_filtered_tmp <- data_filtered %>% group_by(key.x) %>% summarize(total_freq = max(Frequency))
+      data_filtered_complete <- data_filtered %>% group_by(key.x) %>% summarise_all(first)
+      data_filtered_complete$Frequency <- data_filtered_tmp$total_freq
+      data_filtered <- data_filtered_complete
+      data_filtered <- data_filtered %>% rename(key=key.x)
+      data_filtered$col <- colours[col]
+      data_complete[data_complete$key %in% data_filtered$key,'col'] <- colours[1]
+      cat(kable(booktabs = T,data_filtered[order(data_filtered$Gen,data_filtered$Pos_AA),c('key','key.y','Gen','REF_AA','Pos_AA','ALT_AA','ALT_DP','REF_DP','Frequency')],row.names = F, caption = paste('Inserciones/Deleciones (indels) encontradas',variant)))
+      data_filtered <- na.omit(data_filtered)
+      data_complete <- rbind(data_complete,data_filtered[!data_filtered$key %in% data_complete$key,])
+    }
+    col <- col + 1
+  }
+  data_complete <- na.omit(data_complete)
+  if (dim(data_complete)[1] >= 1){
+    data_complete <- data_complete[order(data_complete$Frequency, decreasing = TRUE),]
+    x <- barplot(height=data_complete$Frequency, names=data_complete$key,las = 2, col=data_complete$col, cex.names = 0.5, ylim = c(0,1.1), axisnames = T, main = 'Mutaciones de interés descubiertas (Grafico)')
+    text(x,data_complete$Frequency+0.05,labels=as.character(round(data_complete$Frequency, digits = 4)), cex = 0.5)
+    data_legend <- unique(data_complete[c('col', 'variant')])
+    data_legend <- data_legend[data_legend$col != colours[1],]
+    legend(x = "topright", legend = c(data_legend$variant,'shared'), fill = c(data_legend$col,colours[1]), cex = 0.7, ncol = 4)
+    cols_per_variant <- sorted_cols
+    variants_legend <- sorted_variants
+    cat(kable(booktabs = T,data_complete[c('key','key.y','Gen','REF_AA','Pos_AA','ALT_AA','ALT_DP','REF_DP','Frequency')],row.names = F, caption ='Mutaciones de interés descubiertas') %>% kable_styling(latex_options = c("striped", "scale_down")))
+    data_complete$date <- date_samples[num_sample]
+    new_mutations <- new_mutations[!new_mutations$key_aa_orf1b %in% variantes_comunes$key,]
+    new_mutations <- new_mutations %>% rename(Key=key_aa_orf1b)
+    cat(kable(booktabs = T,new_mutations[order(new_mutations$Gen,new_mutations$Pos_AA),c('Key','key','Gen','REF_AA','Pos_AA','ALT_AA','ALT_DP','REF_DP','Frequency')],row.names = F, caption = 'Mutaciones de interés fuera de las variantes conocidas')%>% kable_styling(latex_options = c("striped", "scale_down")))
+  }
+  data_complete_all_samples <- rbind(data_complete_all_samples, data_complete)
+  num_sample <- num_sample + 1
+}
+```
+
+### Mutaciones de interés por variación a lo largo del tiempo:
+
+Solo se muestran las variantes que han sido catalogadas como relevantes por **covariants.org**.
+
+```{r, echo = F,results = 'asis',fig.width = 8, fig.height = 12}
+library(ggplot2)
+library(grid)
+library(dplyr)
+library(gridExtra)
+data_complete_all_samples <- data_complete_all_samples[order(data_complete_all_samples$date, decreasing = TRUE),]
+data_complete_all_samples$col <- as.factor(data_complete_all_samples$col)
+data_complete_all_samples$variant[data_complete_all_samples$col == '#000000'] <- 'shared'
+cols <- unique(data_complete_all_samples$col)
+variants <- unique(data_complete_all_samples$variant)
+i <- 1
+dict <- vector(mode="list", length=length(variants))
+names(dict) <- cols
+for (col in cols)
+{
+  dict[col] <- variants[i]
+  i <- i + 1
+}
+plots <- list()
+i <- 1
+dates <- rev(unique(data_complete_all_samples$date))
+for (date_local in dates)
+{
+  data_complete_date <- data_complete_all_samples[data_complete_all_samples$date == dates[i],]
+  data_complete_date <- data_complete_date[order(data_complete_date$Frequency, decreasing = TRUE),]
+  if (dim(data_complete_date)[1] > 0){
+    x <- ggplot(data_complete_date, aes(reorder(key,-Frequency), y = Frequency,fill = col)) +geom_bar(stat='identity')+scale_fill_identity(guide = 'legend', labels = dict)+ggtitle(dates[i])+xlab("Mutation") + ylab("Frequency")+theme(legend.title  = element_text(color = "red", size = 0),legend.text = element_text(color = "red", size = 5), legend.position="bottom")+ theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+ylim(0,1)
+    plots[[i]] <- ggplotGrob(x)
+    i <- i + 1
+  }
+}
+do.call('grid.arrange',c(plots, ncol = 2))
+```
+
+### Caso lofreq
+
+Filtro definido con AllGenetics:
+
+  * MinDepth - 5
+  * Threshold - 0.01
+
+```{r, echo = F, fig.align='center',results = 'asis'}
+samples.files <- list.files("resultados_lofreq_residuales/Semana19/", pattern = 'snvs_alt.tsv', recursive = T, full.names = T)
+#date_samples <- c(as.Date('2021-03-10'),as.Date('2021-02-22'),as.Date('2021-02-01'),as.Date('2020-11-27'),as.Date('2021-01-15'),as.Date('2020-12-16'),as.Date('2021-01-27'),as.Date('2021-03-15'))
+date_samples <- c("Semana 19.1", "Semana 19.2")
+num_sample <- 1
+data_complete_all_samples <- data.frame()
+colours <- c("#000000",rainbow(100)) #c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7","#999999","#CC6666", "#9999CC", "#66CC99","#66CC88","#66CC77")
+cols_per_variant <- c()
+variants_legend <- c()
+for (sample in samples.files)
+{
+  new_mutations <- data.frame()
+  cat(paste('Sample: ',sample, date_samples[num_sample]," \n"))
+  df_sample <- read.csv(sample, sep = ',')
+  df_sample <- df_sample[df_sample$Gen != 'Unknown',]
+  df_sample$Frequency <- as.numeric(as.character(df_sample$ALT_FREQ))
+  df_sample$Frequency <- df_sample$ALT_DP/(df_sample$ALT_DP + df_sample$REF_DP)
+  df_sample$Gen <- paste(df_sample$Gen,':', sep = "")
+  df_sample$key <- paste(df_sample$REF,df_sample$POS, df_sample$ALT, sep="")
+  df_sample$key_aa_orf1b <- paste(df_sample$Gen,df_sample$REF_AA, df_sample$POS_AA.2, df_sample$ALT_AA, sep="")
+  df_sample$key_aa <- paste(df_sample$REF_AA, df_sample$POS_AA, df_sample$ALT_AA, sep="")
+  df_sample <- df_sample %>% group_by(key) %>% summarise_all(first)
+  df_sample$key_partial <- paste(df_sample$REF_AA,df_sample$POS_AA.2, sep="")
+  df_sample$POS_CP <- paste(df_sample$Gen,df_sample$POS_AA.2, sep = "")
+  # Rename
+  df_sample <- df_sample %>% rename(Pos_AA=POS_AA.2)
+  # Filtro
+  df_sample <- df_sample[df_sample$ALT_DP >= 5 & df_sample$ALT_FREQ >= 0.01,]
+  col <- 2
+  data_complete <- data.frame()
+  sorted_variants <- c()
+  sorted_cols <- c()
+  for (variant in unique(df_variants$pangolin_lineage))
+  {
+    sorted_variants <- c(sorted_variants, variant)
+    sorted_cols <- c(sorted_cols, colours[col])
+    df_variant_tmp <- df_variants[df_variants$pangolin_lineage == variant,]
+    df_variant_tmp$variant <- variant
+    if (dim(new_mutations)[1] == 0)
+    {
+      new_mutations <- df_sample[(!df_sample$key_aa_orf1b %in% df_variants$key)  & (!df_sample$POS_CP %in% df_variants$key_del) & (df_sample$Frequency > 0.1),]
+    } else {
+      new_mutations <- rbind(new_mutations, df_sample[(!df_sample$key_aa_orf1b %in% df_variants$key)  & (!df_sample$POS_CP %in% df_variants$key_del) & (df_sample$Frequency > 0.1) & (!df_sample$key %in% new_mutations$key),])
+    }
+    # Substitutions
+    data_filtered <- merge(df_variant_tmp[df_variant_tmp$type!='deletion',],df_sample, by.x = 'key', by.y = 'key_aa_orf1b', all.x = TRUE)
+    data_filtered <- data_filtered[order(data_filtered$Frequency,decreasing = T ),c('key','Gen','REF_AA','Pos_AA','ALT_AA','Frequency','ALT_DP','REF_DP','variant','key.y')]
+    data_filtered$col <- colours[col]
+    cat(kable(booktabs = T,data_filtered[order(data_filtered$Gen,data_filtered$Pos_AA),c('key','key.y','Gen','REF_AA','Pos_AA','ALT_AA','ALT_DP','REF_DP','Frequency')],row.names = F, caption = paste('Sustituciones encontradas: ',variant)) %>% kable_styling(latex_options = c("striped", "scale_down")))
+    data_filtered <- na.omit(data_filtered)
+    if (dim(data_complete)[1] == 0){
+      data_complete <- data_filtered
+    } else {
+      data_complete[data_complete$key %in% data_filtered$key,'col'] <- colours[1]
+      data_complete <- rbind(data_complete,data_filtered[!data_filtered$key %in% data_complete$key,])
+    }
+    # Indels
+    df_variant_tmp <- df_variants[df_variants$pangolin_lineage == variant & df_variants$type == 'deletion',]
+    if (dim(df_variant_tmp)[1] >= 1){
+      df_variant_tmp$variant <- variant
+      for (i in df_variant_tmp$key_del)
+      {
+        df_tmp <- df_variant_tmp[df_variant_tmp$key_del == i,]
+        df_sample$POS_CP[df_sample$Pos_AA >= df_tmp$codon_num & df_sample$Pos_AA <= df_tmp$codon_end & df_sample$Gen == df_tmp$gene] <- df_tmp$key_del
+      }
+      data_filtered <- merge(df_variant_tmp,df_sample, by.x = 'key_del', by.y = 'POS_CP', all.x = TRUE)
+      data_filtered <- data_filtered[order(data_filtered$Frequency,decreasing = T ),c('key.x','Gen','REF_AA','Pos_AA','ALT_AA','Frequency','ALT_DP','REF_DP','variant','key.y')]
+      data_filtered <- data_filtered %>% rename(key=key.x)
+      data_filtered$col <- colours[col]
+      data_complete[data_complete$key %in% data_filtered$key,'col'] <- colours[1]
+      cat(kable(booktabs = T,data_filtered[order(data_filtered$Gen,data_filtered$Pos_AA),c('key','key.y','Gen','REF_AA','Pos_AA','ALT_AA','ALT_DP','REF_DP','Frequency')],row.names = F, caption = paste('Inserciones/Deleciones (indels) encontrados: ',variant))%>% kable_styling(latex_options = c("striped", "scale_down")))
+      #data_complete <- rbind(data_complete,data_filtered[((data_filtered$Frequency > relevance_freq) | (data_filtered$Relevance == 1))& !data_filtered$key %in% data_complete$key,])
+      data_filtered <- na.omit(data_filtered)
+      data_complete <- rbind(data_complete,data_filtered[!data_filtered$key %in% data_complete$key,])
+    }
+    col <- col + 1
+  }
+  data_complete <- na.omit(data_complete)
+  if (dim(data_complete)[1] >= 1){
+    data_complete <- data_complete[order(data_complete$Frequency, decreasing = TRUE),]
+    x <- barplot(height=data_complete$Frequency, names=data_complete$key,las = 2, col=data_complete$col, cex.names = 0.5, ylim = c(0,1.05), axisnames = T,main = 'Mutaciones de interés descubiertas (Grafico)')
+    text(x,data_complete$Frequency+0.05,labels=as.character(round(data_complete$Frequency, digits = 4)), cex = 0.5)
+    data_legend <- unique(data_complete[c('col', 'variant')])
+    data_legend <- data_legend[data_legend$col != colours[1],]
+    legend(x = "topright", legend = c(data_legend$variant,'shared'), fill = c(data_legend$col,colours[1]), cex = 0.7, ncol = 4)
+    cols_per_variant <- sorted_cols
+    variants_legend <- sorted_variants
+    cat(kable(booktabs = T,data_complete[order(data_complete$Gen,data_complete$Pos_AA),c('key','key.y','Gen','REF_AA','Pos_AA','ALT_AA','ALT_DP','REF_DP','Frequency')],row.names = F, caption = 'Mutaciones de interés descubiertas') %>% kable_styling(latex_options = c("striped", "scale_down")))
+    data_complete$date <- date_samples[num_sample]
+    new_mutations <- new_mutations[!new_mutations$key_aa_orf1b %in% variantes_comunes$key,]
+    new_mutations <- new_mutations %>% rename(Key=key_aa_orf1b)
+    cat(kable(booktabs = T,new_mutations[order(new_mutations$Gen,new_mutations$Pos_AA),c('Key','key','Gen','REF_AA','Pos_AA','ALT_AA','ALT_DP','REF_DP','Frequency')],row.names = F, caption = "Mutaciones de interés fuera de las variantes conocidas") %>% kable_styling(latex_options = c("striped", "scale_down")))
+  }
+  data_complete_all_samples <- rbind(data_complete_all_samples, data_complete)
+  num_sample <- num_sample + 1
+}
+```
+
+### Mutaciones de interés por variación a lo largo del tiempo:
+
+Se muestran todas las variantes encontradas.
+
+```{r, echo = F,results = 'asis',fig.width = 8, fig.height = 12}
+library(ggplot2)
+library(grid)
+library(dplyr)
+library(gridExtra)
+data_complete_all_samples <- data_complete_all_samples[order(data_complete_all_samples$date, decreasing = TRUE),]
+data_complete_all_samples$col <- as.factor(data_complete_all_samples$col)
+data_complete_all_samples$variant[data_complete_all_samples$col == '#000000'] <- 'shared'
+cols <- unique(data_complete_all_samples$col)
+variants <- unique(data_complete_all_samples$variant)
+i <- 1
+dict <- vector(mode="list", length=length(variants))
+names(dict) <- cols
+for (col in cols)
+{
+  dict[col] <- variants[i]
+  i <- i + 1
+}
+plots <- list()
+i <- 1
+dates <- rev(unique(data_complete_all_samples$date))
+for (date_local in dates)
+{
+  data_complete_date <- data_complete_all_samples[data_complete_all_samples$date == dates[i],]
+  data_complete_date <- data_complete_date[order(data_complete_date$Frequency, decreasing = TRUE),]
+  if (dim(data_complete_date)[1] > 0){
+    data_complete_date <- data_complete_date %>% group_by(key) %>% summarise_all(first)
+    x <- ggplot(data_complete_date, aes(reorder(key,-Frequency), y = Frequency,fill = col)) +geom_bar(stat='identity')+scale_fill_identity(guide = 'legend', labels = dict)+ggtitle(dates[i])+xlab("Mutation") + ylab("Frequency")+theme(legend.title  = element_text(color = "red", size = 0),legend.text = element_text(color = "red", size = 5), legend.position="bottom")+ theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+ylim(0,1)
+    plots[[i]] <- ggplotGrob(x)
+    i <- i + 1
+  }
+}
+do.call('grid.arrange',c(plots, ncol = 2))
+```
