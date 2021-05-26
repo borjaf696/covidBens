@@ -1,0 +1,11 @@
+mutation	mutation_count	lineage_count	gene	ref_aa	alt_aa	codon_num	codon_end	type	prevalence	change_length_nt	pangolin_lineage	id	source
+"orf1a:e1013k"	785	792	"ORF1a"	"E"	"K"	1013	"None"	"substitution"	0.9911616161616161	"None"	"C.16"	"orf1a_e1013k"	
+"orf1a:a3143v"	784	792	"ORF1a"	"A"	"V"	3143	"None"	"substitution"	0.98989898989899	"None"	"C.16"	"orf1a_a3143v"	
+"orf1b:p314l"	784	792	"ORF1b"	"P"	"L"	314	"None"	"substitution"	0.98989898989899	"None"	"C.16"	"orf1b_p314l"	
+"s:d614g"	783	792	"S"	"D"	"G"	614	"None"	"substitution"	0.9886363636363636	"None"	"C.16"	"s_d614g"	
+"orf1a:t1246i"	782	792	"ORF1a"	"T"	"I"	1246	"None"	"substitution"	0.9873737373737373	"None"	"C.16"	"orf1a_t1246i"	
+"orf1a:g3278s"	763	792	"ORF1a"	"G"	"S"	3278	"None"	"substitution"	0.9633838383838383	"None"	"C.16"	"orf1a_g3278s"	
+"n:g204r"	756	792	"N"	"G"	"R"	204	"None"	"substitution"	0.9545454545454546	"None"	"C.16"	"n_g204r"	
+"n:r203k"	756	792	"N"	"R"	"K"	203	"None"	"substitution"	0.9545454545454546	"None"	"C.16"	"n_r203k"	
+"s:l452r"	753	792	"S"	"L"	"R"	452	"None"	"substitution"	0.9507575757575758	"None"	"C.16"	"s_l452r"	
+"orf1a:t4175i"	742	792	"ORF1a"	"T"	"I"	4175	"None"	"substitution"	0.9368686868686869	"None"	"C.16"	"orf1a_t4175i"	

@@ -1,0 +1,12 @@
+mutation	mutation_count	lineage_count	gene	ref_aa	alt_aa	codon_num	codon_end	type	prevalence	change_length_nt	pangolin_lineage	id	source
+"s:d614g"	140	163	"S"	"D"	"G"	614	"None"	"substitution"	0.8588957055214724	"None"	"B.1.621"	"s_d614g"	
+"orf3a:q57h"	137	163	"ORF3a"	"Q"	"H"	57	"None"	"substitution"	0.8404907975460123	"None"	"B.1.621"	"orf3a_q57h"	
+"n:t205i"	134	163	"N"	"T"	"I"	205	"None"	"substitution"	0.8220858895705522	"None"	"B.1.621"	"n_t205i"	
+"orf1b:p314l"	131	163	"ORF1b"	"P"	"L"	314	"None"	"substitution"	0.803680981595092	"None"	"B.1.621"	"orf1b_p314l"	
+"orf1b:p1342s"	126	163	"ORF1b"	"P"	"S"	1342	"None"	"substitution"	0.7730061349693251	"None"	"B.1.621"	"orf1b_p1342s"	
+"orf8:t11k"	126	163	"ORF8"	"T"	"K"	11	"None"	"substitution"	0.7730061349693251	"None"	"B.1.621"	"orf8_t11k"	
+"orf8:p38s"	125	163	"ORF8"	"P"	"S"	38	"None"	"substitution"	0.7668711656441718	"None"	"B.1.621"	"orf8_p38s"	
+"orf1a:t1055a"	124	163	"ORF1a"	"T"	"A"	1055	"None"	"substitution"	0.7607361963190185	"None"	"B.1.621"	"orf1a_t1055a"	
+"orf3a:del256/257"	123	163	"ORF3a"	"ORF3A:DEL256/257"	"DEL256/257"	256	257	"deletion"	0.754601226993865	6	"B.1.621"	"orf3a_del256_257"	
+"s:n501y"	123	163	"S"	"N"	"Y"	501	"None"	"substitution"	0.754601226993865	"None"	"B.1.621"	"s_n501y"	
+"s:p681h"	123	163	"S"	"P"	"H"	681	"None"	"substitution"	0.754601226993865	"None"	"B.1.621"	"s_p681h"	

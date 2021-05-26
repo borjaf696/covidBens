@@ -1,0 +1,12 @@
+mutation	mutation_count	lineage_count	gene	ref_aa	alt_aa	codon_num	codon_end	type	prevalence	change_length_nt	pangolin_lineage	id	source
+"orf1b:a975v"	112	112	"ORF1b"	"A"	"V"	975	"None"	"substitution"	1	"None"	"A.28"	"orf1b_a975v"	
+"orf1b:d1183y"	112	112	"ORF1b"	"D"	"Y"	1183	"None"	"substitution"	1	"None"	"A.28"	"orf1b_d1183y"	
+"orf8:l84s"	112	112	"ORF8"	"L"	"S"	84	"None"	"substitution"	1	"None"	"A.28"	"orf8_l84s"	
+"s:n501t"	112	112	"S"	"N"	"T"	501	"None"	"substitution"	1	"None"	"A.28"	"s_n501t"	
+"n:a35v"	111	112	"N"	"A"	"V"	35	"None"	"substitution"	0.9910714285714286	"None"	"A.28"	"n_a35v"	
+"s:h655y"	111	112	"S"	"H"	"Y"	655	"None"	"substitution"	0.9910714285714286	"None"	"A.28"	"s_h655y"	
+"orf1a:a3529t"	110	112	"ORF1a"	"A"	"T"	3529	"None"	"substitution"	0.9821428571428571	"None"	"A.28"	"orf1a_a3529t"	
+"orf3a:s171l"	105	112	"ORF3a"	"S"	"L"	171	"None"	"substitution"	0.9375	"None"	"A.28"	"orf3a_s171l"	
+"orf1a:v86f"	102	112	"ORF1a"	"V"	"F"	86	"None"	"substitution"	0.9107142857142857	"None"	"A.28"	"orf1a_v86f"	
+"s:del69/70"	102	112	"S"	"S:DEL69/70"	"DEL69/70"	69	70	"deletion"	0.9107142857142857	6	"A.28"	"s_del69_70"	
+"n:s202n"	99	112	"N"	"S"	"N"	202	"None"	"substitution"	0.8839285714285714	"None"	"A.28"	"n_s202n"	

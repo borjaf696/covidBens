@@ -1,0 +1,6 @@
+mutation	mutation_count	lineage_count	gene	ref_aa	alt_aa	codon_num	codon_end	type	prevalence	change_length_nt	pangolin_lineage	id	source
+"s:d614g"	67269	67772	"S"	"D"	"G"	614	"None"	"substitution"	0.9925780558342678	"None"	"B.1.177"	"s_d614g"	
+"orf1b:p314l"	67095	67772	"ORF1b"	"P"	"L"	314	"None"	"substitution"	0.9900106238564599	"None"	"B.1.177"	"orf1b_p314l"	
+"n:a220v"	66030	67772	"N"	"A"	"V"	220	"None"	"substitution"	0.9742961695095319	"None"	"B.1.177"	"n_a220v"	
+"s:a222v"	65979	67772	"S"	"A"	"V"	222	"None"	"substitution"	0.9735436463436228	"None"	"B.1.177"	"s_a222v"	
+"orf10:v30l"	65339	67772	"ORF10"	"V"	"L"	30	"None"	"substitution"	0.9641002183792716	"None"	"B.1.177"	"orf10_v30l"	

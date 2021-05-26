@@ -1,0 +1,12 @@
+mutation	mutation_count	lineage_count	gene	ref_aa	alt_aa	codon_num	codon_end	type	prevalence	change_length_nt	pangolin_lineage	id	source
+"s:d614g"	12282	12361	"S"	"D"	"G"	614	"None"	"substitution"	0.9936089313162365	"None"	"B.1.427"	"s_d614g"	
+"orf1a:t265i"	12265	12361	"ORF1a"	"T"	"I"	265	"None"	"substitution"	0.9922336380551735	"None"	"B.1.427"	"orf1a_t265i"	
+"orf3a:q57h"	12250	12361	"ORF3a"	"Q"	"H"	57	"None"	"substitution"	0.9910201440012943	"None"	"B.1.427"	"orf3a_q57h"	
+"n:t205i"	12218	12361	"N"	"T"	"I"	205	"None"	"substitution"	0.9884313566863523	"None"	"B.1.427"	"n_t205i"	
+"s:l452r"	11930	12361	"S"	"L"	"R"	452	"None"	"substitution"	0.9651322708518728	"None"	"B.1.427"	"s_l452r"	
+"orf1b:d1183y"	11923	12361	"ORF1b"	"D"	"Y"	1183	"None"	"substitution"	0.9645659736267292	"None"	"B.1.427"	"orf1b_d1183y"	
+"orf1a:s3158t"	11868	12361	"ORF1a"	"S"	"T"	3158	"None"	"substitution"	0.9601164954291724	"None"	"B.1.427"	"orf1a_s3158t"	
+"orf1b:p976l"	11832	12361	"ORF1b"	"P"	"L"	976	"None"	"substitution"	0.9572041096998625	"None"	"B.1.427"	"orf1b_p976l"	
+"orf1b:p314l"	11738	12361	"ORF1b"	"P"	"L"	314	"None"	"substitution"	0.9495995469622199	"None"	"B.1.427"	"orf1b_p314l"	
+"s:s13i"	11589	12361	"S"	"S"	"I"	13	"None"	"substitution"	0.9375455060270205	"None"	"B.1.427"	"s_s13i"	
+"s:w152c"	11072	12361	"S"	"W"	"C"	152	"None"	"substitution"	0.8957204109699862	"None"	"B.1.427"	"s_w152c"	
